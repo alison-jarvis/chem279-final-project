@@ -1,0 +1,6 @@
+{   
+    "atoms_file_path" : "atoms/CO2.xyz",
+    "output_file_path" : "output/CO2.hdf5",
+    "num_alpha_electrons" : 4,
+    "num_beta_electrons" : 4
+}

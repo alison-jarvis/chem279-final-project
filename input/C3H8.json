@@ -1,0 +1,6 @@
+{   
+    "atoms_file_path" : "atoms/C3H8.xyz",
+    "output_file_path" : "output/C3H8.hdf5",
+    "num_alpha_electrons" : 10,
+    "num_beta_electrons" : 10
+}

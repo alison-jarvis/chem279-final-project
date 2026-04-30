@@ -1,0 +1,6 @@
+{   
+    "atoms_file_path" : "atoms/C2H6.xyz",
+    "output_file_path" : "output/C2H6.hdf5",
+    "num_alpha_electrons" : 7,
+    "num_beta_electrons" : 7
+}
