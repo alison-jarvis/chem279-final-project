@@ -1,24 +1,35 @@
 #include <armadillo>
 #include <cmath>
+#include <fstream>
+#include <iostream>
+#include <nlohmann/json.hpp>
+#include <filesystem>
 
-//assuming dipole moment is arma::vec of length 3 = mu
-//assuming polarizability tensor is (3 x 3) arma::mat = alpha
-double dipole_mag(const arma::vec& mu) {
-    return std::sqrt(arma::dot(mu, mu));
-}
+namespace fs = std::filesystem;
+using json = nlohmann::json;
 
-double iso_polarizability(const arma::mat& alpha){
-    return (alpha(0,0) + alpha(1,1) + alpha(2,2)) / 3.0;
-}
-
-double aniso_polarizability(const arma::mat& alpha){
-    double xy_delta = (alpha(0,0) - alpha(1,1)) * (alpha(0,0) - alpha(1,1));
-    double yz_delta = (alpha(1,1) - alpha(2,2)) * (alpha(1,1) - alpha(2,2));
-    double xz_delta = (alpha(0,0) - alpha(2,2)) * (alpha(0,0) - alpha(2,2));
-
-    return std::sqrt(0.5 * (xy_delta + yz_delta + xz_delta))
-}
+#include "polarity.hpp"
 
 int main() {
+
+    std::string path = "./input";
+    for (const auto& entry : fs::directory_iterator(path)) {
+        // Parse config file path into json config
+        std::ifstream config_file(entry.path());
+        json config = json::parse(config_file);
+
+        // Extract important information from config
+        fs::path atoms_file_path = config["atoms_file_path"];
+        int p = config["num_alpha_electrons"];
+        int q = config["num_beta_electrons"];
+        
+        // Calculate dipole from molecule of interest
+        arma::vec dipole_vector = compute_dipole_from_xyz(atoms_file_path, p, q);
+        double dipole = dipole_norm(dipole_vector);
+
+        std::cout << "Permanent Dipole for " << atoms_file_path << ":" << std::endl << dipole_vector << std::endl;
+        std::cout << "Magnitude: " << dipole << std::endl;
+    }
+
     return 0;
 }

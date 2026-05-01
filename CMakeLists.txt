@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 3.31)
 
-project (homework_4 LANGUAGES CXX)
+project (final_project LANGUAGES CXX)
 
 # Compiler requirements
 set(CMAKE_CXX_STANDARD 20) 
@@ -37,4 +37,4 @@ link_libraries(common)
 
 # If Needed Make Modifications below this line 
 
-add_executable(output src/main.cpp) #need to edit this
+add_executable(output src/main.cpp src/polarity.cpp src/cndo2_utils.cpp) #need to edit this
