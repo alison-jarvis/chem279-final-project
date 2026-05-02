@@ -74,23 +74,25 @@ double compute_per_atom_P(const arma::mat& P, const std::vector<Sto3G_Basis>& ba
 arma::mat compute_gamma_matrix(const std::vector<Atom>& atoms);
 
 arma::mat compute_fock_matrix(
-    const std::vector<Sto3G_Basis>& basis_vec,
-    const std::vector<Atom>& atoms,
-    const arma::mat& P_ab,
-    const arma::mat& P_tot,
-    const arma::mat& gamma_matrix,
-    const arma::mat& S,
-    bool full_fock = true
+    const std::vector<Sto3G_Basis>& basis_vec, 
+    const std::vector<Atom>& atoms, 
+    const arma::mat& P_ab, 
+    const arma::mat& P_tot, 
+    const arma::mat& gamma_matrix, 
+    const arma::mat& S, 
+    bool full_fock = true, 
+    arma::vec elec_field = arma::zeros<arma::vec>(3)
 );
 
 SCFSolution cndo2_scf(
-    const std::vector<Sto3G_Basis>& basis_vec,
-    const std::vector<Atom>& atoms,
-    const arma::mat& gamma_matrix,
-    const arma::mat& S,
-    int p,
-    int q,
-    double tolerance = 1e-6,
+    const std::vector<Sto3G_Basis>& basis_vec, 
+    const std::vector<Atom>& atoms, 
+    const arma::mat& gamma_matrix, 
+    const arma::mat& S, 
+    int p, 
+    int q, 
+    arma::vec ext_field = arma::zeros<arma::vec>(3), 
+    double tolerance = 1e-6, 
     int max_iterations = 1000
 );
 

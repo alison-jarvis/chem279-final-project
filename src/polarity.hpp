@@ -18,10 +18,19 @@ std::vector<double> calculate_qA(const std::vector<Atom>& atoms, const std::vect
 arma::vec calculate_permanent_dipole(const std::vector<Atom>& atoms, const std::vector<Sto3G_Basis>& bases, const SCFSolution& scf_sol);
 
 // Wrapper, dipole from config options
-arma::vec compute_dipole_from_xyz(std::string atoms_file_path, int p, int q);
+arma::vec compute_dipole_from_xyz(
+    std::string atoms_file_path, 
+    int p, 
+    int q, 
+    arma::vec ext_electric_field = arma::zeros<arma::vec>(3)
+);
 
-// Helper - norm of dipole
-double dipole_norm(const arma::vec& dipole_vec);
+/*
+POLARIZABILITY CALCULATION
+*/
+
+arma::mat calculate_polarizability_tensor(std::string atoms_file_path, int p, int q, double f = 1.0e-4);
+
 
 /*
 PROPERTY CALCULATION
@@ -29,6 +38,6 @@ PROPERTY CALCULATION
 
 double dipole_mag(const arma::vec& mu);
 
-double iso_polarizability(const arma::mat& alpha);
+double isotropic_polarizability(const arma::mat& alpha);
 
-double aniso_polarizability(const arma::mat& alpha);
+double ansiotropic_polarizability(const arma::mat& alpha);

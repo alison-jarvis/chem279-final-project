@@ -53,7 +53,7 @@ arma::vec calculate_permanent_dipole(const std::vector<Atom>& atoms, const std::
 }
 
 // Wrapper - from xyz file, run SCF, compute dipole
-arma::vec compute_dipole_from_xyz(std::string atoms_file_path, int p, int q){
+arma::vec compute_dipole_from_xyz(std::string atoms_file_path, int p, int q, arma::vec ext_electric_field = arma::zeros<arma::vec>(3)){
 
     // Read atoms from the file
     std::vector<Atom> atoms = read_xyz_file(atoms_file_path);
@@ -68,7 +68,7 @@ arma::vec compute_dipole_from_xyz(std::string atoms_file_path, int p, int q){
     arma::mat gamma_mat = compute_gamma_matrix(atoms);
 
     // Run SCF
-    SCFSolution scf_sol = cndo2_scf(bases, atoms, gamma_mat, S, p, q);
+    SCFSolution scf_sol = cndo2_scf(bases, atoms, gamma_mat, S, p, q, ext_electric_field);
 
     // Calculate dipole from SCF solution
     arma::vec dipole = calculate_permanent_dipole(atoms, bases, scf_sol);
@@ -76,10 +76,38 @@ arma::vec compute_dipole_from_xyz(std::string atoms_file_path, int p, int q){
     return dipole;
 }
 
-// Helper - norm of dipole
-double dipole_norm(const arma::vec& dipole_vec){
-    double dipole = arma::norm(dipole_vec);
-    return dipole;
+/*
+POLARIZABILITY CALCULATION
+*/
+
+// Function to calculate polarizability tensor
+arma::mat calculate_polarizability_tensor(std::string atoms_file_path, int p, int q, double f = 1.0e-4){
+    // Initialize tensor
+    arma::mat alpha(3, 3, arma::fill::zeros);
+
+    // Loop over field direction, j
+    for (int j = 0; j < 3; j++){
+        // Get positive external field in ith component
+        arma::vec pos_ext_field = arma::zeros<arma::vec>(3);
+        pos_ext_field(j) = f;
+        // Calculate dipole for positive f
+        arma::vec dipole_positive_f = compute_dipole_from_xyz(atoms_file_path, p, q, pos_ext_field);
+
+        // Get negative external field in ith component
+        arma::vec neg_ext_field = arma::zeros<arma::vec>(3);
+        neg_ext_field(j) = -f;
+        // Calculate dipole for negative f
+        arma::vec dipole_negative_f = compute_dipole_from_xyz(atoms_file_path, p, q, neg_ext_field);
+
+        // Loop over dipole components, i
+        for (int i = 0; i < 3; i++){
+            // Calculate the component with central differences
+            double alpha_ij = (dipole_positive_f(i) - dipole_negative_f(i))/(2.0 * f);
+            // Store in tensor
+            alpha(i, j) = alpha_ij;
+        }
+    }
+    return alpha;
 }
 
 /*
@@ -92,14 +120,28 @@ double dipole_mag(const arma::vec& mu) {
     return std::sqrt(arma::dot(mu, mu));
 }
 
-double iso_polarizability(const arma::mat& alpha){
+// Isotropic polarizability
+double isotropic_polarizability(const arma::mat& alpha){
     return (alpha(0,0) + alpha(1,1) + alpha(2,2)) / 3.0;
 }
 
-double aniso_polarizability(const arma::mat& alpha){
-    double xy_delta = (alpha(0,0) - alpha(1,1)) * (alpha(0,0) - alpha(1,1));
-    double yz_delta = (alpha(1,1) - alpha(2,2)) * (alpha(1,1) - alpha(2,2));
-    double xz_delta = (alpha(0,0) - alpha(2,2)) * (alpha(0,0) - alpha(2,2));
+// Ansiotropic polarizability
+double ansiotropic_polarizability(const arma::mat& alpha){
 
-    return std::sqrt(0.5 * (xy_delta + yz_delta + xz_delta));
+    // Symmetrize the off diagonal terms
+    arma::mat a = 0.5 * (alpha + alpha.t());
+
+    // Numerator diagonal terms
+    double xy_delta = (a(0,0) - a(1,1)) * (a(0,0) - a(1,1));
+    double yz_delta = (a(1,1) - a(2,2)) * (a(1,1) - a(2,2));
+    double xz_delta = (a(0,0) - a(2,2)) * (a(0,0) - a(2,2));
+    double numerator_term1 = xy_delta + yz_delta + xz_delta;
+
+    // Numerator off diagonal terms
+    double cross_term_sum = (a(0,1)*a(0,1)) + (a(1,2)*a(1,2)) + (a(0,2)*a(0,2));
+
+    // Total term in brackets
+    double combined = (numerator_term1 + (6.0 * cross_term_sum)) / 2.0;
+
+    return std::sqrt(combined);
 }

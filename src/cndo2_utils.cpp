@@ -556,7 +556,7 @@ double compute_fock_diag_term(const std::vector<Sto3G_Basis>& bases, const std::
 }
 
 // Function to compute fock matrix
-arma::mat compute_fock_matrix(const std::vector<Sto3G_Basis>& basis_vec, const std::vector<Atom>& atoms, const arma::mat& P_ab, const arma::mat& P_tot, const arma::mat& gamma_matrix, const arma::mat& S, bool full_fock = true){
+arma::mat compute_fock_matrix(const std::vector<Sto3G_Basis>& basis_vec, const std::vector<Atom>& atoms, const arma::mat& P_ab, const arma::mat& P_tot, const arma::mat& gamma_matrix, const arma::mat& S, bool full_fock = true, arma::vec elec_field = arma::zeros<arma::vec>(3)){
     // Make an empty arma::mat of size NxN
     arma::mat fock_matrix(basis_vec.size(), basis_vec.size(), arma::fill::zeros);
 
@@ -583,6 +583,10 @@ arma::mat compute_fock_matrix(const std::vector<Sto3G_Basis>& basis_vec, const s
             else{
                 // Compute diagonal fock term
                 double fock_nu_nu = compute_fock_diag_term(basis_vec, atoms, gamma_matrix, P_tot, basis_nu.atomic_index, basis_nu.sto3g.IA_coeff, P_ab(nu, nu), full_fock);
+                // Compute field shift for diagonal term (zero nominally)
+                double electric_field_shift = arma::dot(elec_field, atom_A.location);
+                // Add this to the diagonal term
+                fock_nu_nu += electric_field_shift;
                 // Add to fock matrix
                 fock_matrix(nu, nu) = fock_nu_nu;
             }
@@ -652,7 +656,7 @@ arma::mat calculate_P_from_C(const arma::mat& C, int n_elec){
 }
 
 // Overall function to implement SCF
-SCFSolution cndo2_scf(const std::vector<Sto3G_Basis>& basis_vec, const std::vector<Atom>& atoms, const arma::mat& gamma_matrix, const arma::mat& S, int p, int q, double tolerance = 1e-6, int max_iterations = 1000){
+SCFSolution cndo2_scf(const std::vector<Sto3G_Basis>& basis_vec, const std::vector<Atom>& atoms, const arma::mat& gamma_matrix, const arma::mat& S, int p, int q, arma::vec ext_field = arma::zeros<arma::vec>(3), double tolerance = 1e-6, int max_iterations = 1000){
     // Initial guess for P matrices, zeros, dimension of bases
     arma::mat P_alpha(basis_vec.size(), basis_vec.size(), arma::fill::zeros);
     arma::mat P_beta(basis_vec.size(), basis_vec.size(), arma::fill::zeros);
@@ -672,8 +676,8 @@ SCFSolution cndo2_scf(const std::vector<Sto3G_Basis>& basis_vec, const std::vect
     while (!converged){
 
         // Build the fock matrices
-        fock_alpha = compute_fock_matrix(basis_vec, atoms, P_alpha, P_tot, gamma_matrix, S);
-        fock_beta = compute_fock_matrix(basis_vec, atoms, P_beta, P_tot, gamma_matrix, S);
+        fock_alpha = compute_fock_matrix(basis_vec, atoms, P_alpha, P_tot, gamma_matrix, S, true, ext_field);
+        fock_beta = compute_fock_matrix(basis_vec, atoms, P_beta, P_tot, gamma_matrix, S, true, ext_field);
 
         // Solve the eigenvalue problem to get C's, E's
         EigenSolutionStandard fock_sol_alpha = solve_standard_eigenvalue(fock_alpha);
@@ -714,11 +718,11 @@ SCFSolution cndo2_scf(const std::vector<Sto3G_Basis>& basis_vec, const std::vect
 
     // Construct the custom solution object to return
     SCFSolution solution;
-    solution.F_alpha = compute_fock_matrix(basis_vec, atoms, P_alpha, P_tot, gamma_matrix, S);
-    solution.F_beta = compute_fock_matrix(basis_vec, atoms, P_beta, P_tot, gamma_matrix, S);
+    solution.F_alpha = compute_fock_matrix(basis_vec, atoms, P_alpha, P_tot, gamma_matrix, S, true, ext_field);
+    solution.F_beta = compute_fock_matrix(basis_vec, atoms, P_beta, P_tot, gamma_matrix, S, true, ext_field);
     solution.P_alpha = P_alpha;
     solution.P_beta = P_beta;
-    solution.H = compute_fock_matrix(basis_vec, atoms, P_alpha, P_tot, gamma_matrix, S, false);
+    solution.H = compute_fock_matrix(basis_vec, atoms, P_alpha, P_tot, gamma_matrix, S, false, ext_field);
     solution.C_alpha = C_alpha;
     solution.E_alpha = E_alpha;
     solution.C_beta = C_beta;
