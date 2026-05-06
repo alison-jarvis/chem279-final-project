@@ -76,20 +76,20 @@ struct Sto3G_Basis{
 
 // Lookup table of atomic number, sto3g shells
 std::map<int, std::vector<Sto3G_Shell>> shell_lookup = {
-    {1, { {0, -13.6, 7.176, "H_s"} }}, // Hydrogen
-    {6, { {0, -21.4, 14.051, "C_s"}, {1, -11.4, 5.572, "C_p"} }}, // Carbon
-    {7, { {0, -0.00, 19.316, "N_s"}, {1, -0.00, 7.275, "N_p"} }}, // Nitrogen
-    {8, { {0, -0.00, 25.390, "O_s"}, {1, -0.00, 9.111, "O_p"} }}, // Oxygen
-    {9, { {0, -0.00, 32.272, "F_s"}, {1, -0.00, 11.080, "F_p"} }} // Fluorine
+    {1, { {0, -13.6 / 27.211324570273, 7.176 / 27.211324570273, "H_s"} }}, // Hydrogen
+    {6, { {0, -21.4 / 27.211324570273, 14.051 / 27.211324570273, "C_s"}, {1, -11.4 / 27.211324570273, 5.572 / 27.211324570273, "C_p"} }}, // Carbon
+    {7, { {0, -0.00, 19.316 / 27.211324570273, "N_s"}, {1, -0.00, 7.275 / 27.211324570273, "N_p"} }}, // Nitrogen
+    {8, { {0, -0.00, 25.390 / 27.211324570273, "O_s"}, {1, -0.00, 9.111 / 27.211324570273, "O_p"} }}, // Oxygen
+    {9, { {0, -0.00, 32.272 / 27.211324570273, "F_s"}, {1, -0.00, 11.080 / 27.211324570273, "F_p"} }} // Fluorine
 };
 
 // Lookup table of atomic number, {beta, Z}
-std::map<int, std::vector<int>> atom_lookup = {
-    {1, {-9, 1}},
-    {6, {-21, 4}},
-    {7, {-25, 5}},
-    {8, {-31, 6}},
-    {9, {-39, 7}}
+std::map<int, std::vector<double>> atom_lookup = {
+    {1, {-9 / 27.211324570273, 1.0}},
+    {6, {-21 / 27.211324570273, 4.0}},
+    {7, {-25 / 27.211324570273, 5.0}},
+    {8, {-31 / 27.211324570273, 6.0}},
+    {9, {-39 / 27.211324570273, 7.0}}
 };
 
 
@@ -462,9 +462,8 @@ arma::mat compute_gamma_matrix(const std::vector<Atom>& atoms){
             gamma_matrix(j,i) = gamma_ij;
         }
     }
-    // Convert gamma to eV (from AU)
-    arma::mat gamma_matrix_ev = gamma_matrix * 27.211324570273;
-    return gamma_matrix_ev;
+    // keep gamma in AU
+    return gamma_matrix;
 }
 
 // Helper function, compute off diagonal term of fock matrix
@@ -756,8 +755,6 @@ EnergySolution calculate_fock_energy(const SCFSolution& fock_solution, const std
             nuclear_repulsion_energy += ((atom_A.Z * atom_B.Z) / r_AB);
         }
     }
-    // Convert nuclear repulsion energy to eV (from AU)
-    nuclear_repulsion_energy *= 27.211324570273;
 
     // Calculate the alpha energy term
     arma::mat total_alpha_mat = fock_solution.P_alpha % (fock_solution.H + fock_solution.F_alpha);
