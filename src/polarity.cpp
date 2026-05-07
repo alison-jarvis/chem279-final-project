@@ -3,7 +3,7 @@
 #include "cndo2_utils.hpp"
 
 /*
-PERMANENT DIPOLE CALCULATION
+ORIGINAL PERMANENT DIPOLE CALCULATION
 */
 
 // Helper function - net electron population on atom A
@@ -81,7 +81,7 @@ POLARIZABILITY CALCULATION
 */
 
 // Function to calculate polarizability tensor
-arma::mat calculate_polarizability_tensor(std::string atoms_file_path, int p, int q, double f = 1.0e-4){
+arma::mat calculate_polarizability_tensor(std::string atoms_file_path, int p, int q, bool with_integral = true, double f = 1.0e-4){
     // Initialize tensor
     arma::mat alpha(3, 3, arma::fill::zeros);
 
@@ -91,13 +91,25 @@ arma::mat calculate_polarizability_tensor(std::string atoms_file_path, int p, in
         arma::vec pos_ext_field = arma::zeros<arma::vec>(3);
         pos_ext_field(j) = f;
         // Calculate dipole for positive f
-        arma::vec dipole_positive_f = compute_dipole_from_xyz(atoms_file_path, p, q, pos_ext_field);
+        arma::vec dipole_positive_f;
+        if (with_integral){
+            dipole_positive_f = compute_ao_dipole_from_xyz(atoms_file_path, p, q, pos_ext_field);
+        }
+        else{
+            dipole_positive_f = compute_dipole_from_xyz(atoms_file_path, p, q, pos_ext_field);
+        }
 
         // Get negative external field in ith component
         arma::vec neg_ext_field = arma::zeros<arma::vec>(3);
         neg_ext_field(j) = -f;
         // Calculate dipole for negative f
-        arma::vec dipole_negative_f = compute_dipole_from_xyz(atoms_file_path, p, q, neg_ext_field);
+        arma::vec dipole_negative_f;
+        if (with_integral){
+            dipole_negative_f = compute_ao_dipole_from_xyz(atoms_file_path, p, q, neg_ext_field);
+        }
+        else{
+            dipole_negative_f = compute_dipole_from_xyz(atoms_file_path, p, q, neg_ext_field);
+        }
 
         // Loop over dipole components, i
         for (int i = 0; i < 3; i++){

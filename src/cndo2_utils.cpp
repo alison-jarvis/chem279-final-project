@@ -12,7 +12,7 @@
 #include <nlohmann/json.hpp> 
 
 namespace fs = std::filesystem;
-using json = nlohmann::json; 
+using json = nlohmann::json;
 
 
 /*
@@ -365,8 +365,137 @@ arma::mat populate_overlap_matrix(const std::vector<Sto3G_Basis>& basis_vec){
 }
 
 /*
+SCF STRUCTURE - for reference
+*/
+
+// Structure for SCF solution
+struct SCFSolution{
+    arma::mat F_alpha;
+    arma::mat F_beta;
+    arma::mat P_alpha;
+    arma::mat P_beta;
+    arma::mat H;
+    arma::vec E_alpha;
+    arma::vec E_beta;
+    arma::mat C_alpha;
+    arma::mat C_beta;
+};
+
+/*
+AO PERMANENT DIPOLE CALCULATION
+*/
+
+// Helper - get primitive dipole component
+double get_primitive_dipole_component(const Sto3G_Basis& b1, const Sto3G_Basis& b2, int k, int prim1, int prim2){
+    // Define primitives since they are reused
+    const auto& p1 = b1.sto3g.sto3g[prim1];
+    const auto& p2 = b2.sto3g.sto3g[prim2];
+
+    // Get normalization term for basis 1 with basis 1
+    GaussOverlap3D prim_11(b1.center, b1.center, p1.exp, p1.exp, b1.triplet, b1.triplet);
+    double norm1 = get_normalization_term(prim_11);
+
+    // Get normalization term for basis 2 with basis 2
+    GaussOverlap3D prim_22(b2.center, b2.center, p2.exp, p2.exp, b2.triplet, b2.triplet);
+    double norm2 = get_normalization_term(prim_22);
+
+    // Get original overlap integral
+    GaussOverlap3D overlap_both(b1.center, b2.center, p1.exp, p2.exp, b1.triplet, b2.triplet);
+    double s_original = get_overlap_matrix_term(overlap_both);
+
+    // Raise angular momentum in triplet by one for component k
+    std::vector<int> raised_triplet = b1.triplet;
+    raised_triplet[k] += 1;
+
+    // Get overlap integral with raised angular momentum
+    GaussOverlap3D overlap_raised(b1.center, b2.center, p1.exp, p2.exp, raised_triplet, b2.triplet);
+    double s_raised = get_overlap_matrix_term(overlap_raised);
+
+    // Calculate primitive dipole component
+    double primitive_dipole = s_raised + (b1.center[k] * s_original);
+
+    // Calculate full term
+    double dipole_term = norm1 * norm2 * p1.cc * p2.cc * primitive_dipole;
+    return dipole_term;
+}
+
+// Helper get dipole component for two full AOs
+double get_ao_dipole_component(const Sto3G_Basis& b1, const Sto3G_Basis& b2, int k){
+    // Initialize total sum
+    double sum = 0.0;
+
+    // Iterate over all 3 primitives, outer loop
+    for (int p = 0; p < b1.sto3g.sto3g.size(); p++){
+        // Iterate over all 3 primitives, inner loop
+        for (int q = 0; q < b2.sto3g.sto3g.size(); q++){
+            sum += get_primitive_dipole_component(b1, b2, k, p, q);
+        }
+    }
+    return sum;
+}
+
+// Helper - build the dipole matrix for given comp k, indexed by orbitals
+arma::mat build_ao_dipole_matrix(const std::vector<Sto3G_Basis>& bases, int k){
+    // Initialize empty dipole matrix
+    arma::mat D(bases.size(), bases.size(), arma::fill::zeros);
+
+    // Iterate through bases combos
+    for (int mu = 0; mu < bases.size(); mu++){
+        for (int nu = mu; nu < bases.size(); nu++){
+            // Calculate dipole matrix component
+            double ao_dipole_comp = get_ao_dipole_component(bases[mu], bases[nu], k);
+            // Add to dipole matrix, across diagonal
+            D(mu, nu) = ao_dipole_comp;
+            D(nu, mu) = ao_dipole_comp;
+        }
+    }
+    return D;
+}
+
+// Wrapper - calculate permanent dipole from atoms, bases, SCF solution
+arma::vec calculate_permanent_dipole_ao_integrals(const std::vector<Atom>& atoms, const std::vector<Sto3G_Basis>& bases, const SCFSolution& scf_sol){
+    // Calculate total density matrix
+    arma::mat P_tot = scf_sol.P_alpha + scf_sol.P_beta;
+
+    // Initialize dipole vector
+    arma::vec dipoles = arma::zeros<arma::vec>(3);
+
+    // Iterate through 3 cartesian components
+    for (int k = 0; k < 3; k++){
+        // Initialize nuclear dipole term
+        double nuclear_term = 0.0;
+        // Iterate through atoms
+        for (int A = 0; A < atoms.size(); A++){
+            nuclear_term += atoms[A].Z * atoms[A].location[k];
+        }
+
+        // Compute dipole matrix for this component
+        arma::mat D_k = build_ao_dipole_matrix(bases, k);
+        // Calculate electronic dipole term
+        double electronic_term = arma::accu(P_tot % D_k);
+
+        // Add these elements to the dipole vector at k
+        dipoles[k] = nuclear_term - electronic_term;
+    }
+    return dipoles;
+}
+
+// Helper, perturb the field for a given hamlitonian
+arma::mat build_field_perturbation(const std::vector<Sto3G_Basis>& bases, const arma::vec& field){
+    // Build dipole matrices for each component
+    arma::mat Dx = build_ao_dipole_matrix(bases, 0);
+    arma::mat Dy = build_ao_dipole_matrix(bases, 1);
+    arma::mat Dz = build_ao_dipole_matrix(bases, 2);
+
+    // Compute the dx*fx + dy*fy + dz*fz
+    arma::mat field_update = field(0) * Dx + field(1) * Dy + field(2) * Dz;
+    return field_update;
+}
+
+/*
 CNDO/2 CODE
 */
+
 
 // Function to compute the 0[0] term
 double compute_zero_term(const arma::vec& rA, const arma::vec& rB, double sigmaA, double sigmaB){
@@ -583,14 +712,20 @@ arma::mat compute_fock_matrix(const std::vector<Sto3G_Basis>& basis_vec, const s
                 // Compute diagonal fock term
                 double fock_nu_nu = compute_fock_diag_term(basis_vec, atoms, gamma_matrix, P_tot, basis_nu.atomic_index, basis_nu.sto3g.IA_coeff, P_ab(nu, nu), full_fock);
                 // Compute field shift for diagonal term (zero nominally)
-                double electric_field_shift = arma::dot(elec_field, atom_A.location);
+                //double electric_field_shift = arma::dot(elec_field, atom_A.location);
                 // Add this to the diagonal term
-                fock_nu_nu += electric_field_shift;
+                //fock_nu_nu += electric_field_shift;
                 // Add to fock matrix
                 fock_matrix(nu, nu) = fock_nu_nu;
             }
         }
     }
+    // Add perturbation if field is non-zero
+    if (arma::norm(elec_field) > 0.0){
+        // Add perturbation
+         fock_matrix += build_field_perturbation(basis_vec, elec_field);
+    }
+
     // Return matrix
     return fock_matrix;
 }
@@ -599,19 +734,6 @@ arma::mat compute_fock_matrix(const std::vector<Sto3G_Basis>& basis_vec, const s
 struct EigenSolutionStandard{
     arma::mat C;
     arma::vec E;
-};
-
-// Structure for SCF solution
-struct SCFSolution{
-    arma::mat F_alpha;
-    arma::mat F_beta;
-    arma::mat P_alpha;
-    arma::mat P_beta;
-    arma::mat H;
-    arma::vec E_alpha;
-    arma::vec E_beta;
-    arma::mat C_alpha;
-    arma::mat C_beta;
 };
 
 // Helper function, to solve standard eigenvalue problem
@@ -774,4 +896,33 @@ EnergySolution calculate_fock_energy(const SCFSolution& fock_solution, const std
     esol.E_total = fock_energy;
 
     return esol;
+}
+
+
+/*
+DIPOLE WRAPPER
+*/
+
+// Wrapper - from xyz compute AO form of dipole
+arma::vec compute_ao_dipole_from_xyz(std::string atoms_file_path, int p, int q, arma::vec ext_electric_field = arma::zeros<arma::vec>(3)){
+
+    // Read atoms from the file
+    std::vector<Atom> atoms = read_xyz_file(atoms_file_path);
+
+    // Get vector of basis functions
+    std::vector<Sto3G_Basis> bases = build_basis_functions(atoms);
+
+    // Get the overlap matrix
+    arma::mat S = populate_overlap_matrix(bases);
+
+    // Get the gamma matrix
+    arma::mat gamma_mat = compute_gamma_matrix(atoms);
+
+    // Run SCF
+    SCFSolution scf_sol = cndo2_scf(bases, atoms, gamma_mat, S, p, q, ext_electric_field);
+
+    // Calculate dipole from SCF solution
+    arma::vec dipole = calculate_permanent_dipole_ao_integrals(atoms, bases, scf_sol);
+
+    return dipole;
 }

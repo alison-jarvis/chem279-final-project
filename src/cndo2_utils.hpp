@@ -67,6 +67,25 @@ std::vector<Sto3G_Basis> build_basis_functions(const std::vector<Atom>& atoms);
 arma::mat populate_overlap_matrix(const std::vector<Sto3G_Basis>& basis_vec);
 
 /*
+PERMANENT DIPOLE AO INTEGRAL CALCULATION
+*/
+
+// Helper - get primitive dipole component
+double get_primitive_dipole_component(const Sto3G_Basis& b1, const Sto3G_Basis& b2, int k, int prim1, int prim2);
+
+// Helper get dipole component for two full AOs
+double get_ao_dipole_component(const Sto3G_Basis& b1, const Sto3G_Basis& b2, int k);
+
+// Helper - build the dipole matrix for given comp k, indexed by orbitals
+arma::mat build_ao_dipole_matrix(const std::vector<Sto3G_Basis>& bases, int k);
+
+// Wrapper - calculate permanent dipole from atoms, bases, SCF solution
+arma::vec calculate_permanent_dipole_ao_integrals(const std::vector<Atom>& atoms, const std::vector<Sto3G_Basis>& bases, const SCFSolution& scf_sol);
+
+// Wrapper - from xyz compute AO form of dipole
+arma::vec compute_ao_dipole_from_xyz(std::string atoms_file_path, int p, int q, arma::vec ext_electric_field = arma::zeros<arma::vec>(3));
+
+/*
 CNDO/2 Things
 */
 double compute_per_atom_P(const arma::mat& P, const std::vector<Sto3G_Basis>& basis_vec, int atom_index);

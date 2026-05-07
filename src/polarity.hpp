@@ -29,7 +29,7 @@ arma::vec compute_dipole_from_xyz(
 POLARIZABILITY CALCULATION
 */
 
-arma::mat calculate_polarizability_tensor(std::string atoms_file_path, int p, int q, double f = 1.0e-4);
+arma::mat calculate_polarizability_tensor(std::string atoms_file_path, int p, int q, bool with_integral = true, double f = 1.0e-4);
 
 
 /*
