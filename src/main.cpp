@@ -32,12 +32,12 @@ int main() {
 
         // Calculate derived properties from this
         double iso_polarizability = isotropic_polarizability(alpha);
-        double ansio_polarizability = ansiotropic_polarizability(alpha);
+        double aniso_polarizability = anisotropic_polarizability(alpha);
 
         std::cout << "File: " << atoms_file_path << std::endl;
         std::cout << "Permanent dipole magnitude: " << dipole << std::endl;
         std::cout << "Iso polarizability: " << iso_polarizability << std::endl;
-        std::cout << "Ansio polarizability: " << ansio_polarizability << std::endl << std::endl;
+        std::cout << "Aniso polarizability: " << aniso_polarizability << std::endl << std::endl;
     }
 
     return 0;

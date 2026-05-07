@@ -125,8 +125,8 @@ double isotropic_polarizability(const arma::mat& alpha){
     return (alpha(0,0) + alpha(1,1) + alpha(2,2)) / 3.0;
 }
 
-// Ansiotropic polarizability
-double ansiotropic_polarizability(const arma::mat& alpha){
+// Anisotropic polarizability
+double anisotropic_polarizability(const arma::mat& alpha){
 
     // Symmetrize the off diagonal terms
     arma::mat a = 0.5 * (alpha + alpha.t());
