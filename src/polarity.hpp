@@ -40,4 +40,4 @@ double dipole_mag(const arma::vec& mu);
 
 double isotropic_polarizability(const arma::mat& alpha);
 
-double ansiotropic_polarizability(const arma::mat& alpha);
+double anisotropic_polarizability(const arma::mat& alpha);

@@ -35,7 +35,7 @@ int main() {
 
         // Calculate derived properties from this
         double iso_polarizability = isotropic_polarizability(alpha);
-        double ansio_polarizability = ansiotropic_polarizability(alpha);
+        double aniso_polarizability = anisotropic_polarizability(alpha);
 
         // PART 2 - Dipole with integral method
 
@@ -48,13 +48,13 @@ int main() {
 
         // Calculate derived properties from this
         double iso_polarizability_ao = isotropic_polarizability(alpha_ao);
-        double ansio_polarizability_ao = ansiotropic_polarizability(alpha_ao);
+        double aniso_polarizability_ao = anisotropic_polarizability(alpha_ao);
 
 
         std::cout << "File: " << atoms_file_path << std::endl;
         std::cout << "Permanent dipole magnitude (og, new): " << dipole << ", " << dipole_ao << std::endl;
         std::cout << "Iso polarizability (og, new): " << iso_polarizability << ", " << iso_polarizability_ao << std::endl;
-        std::cout << "Ansio polarizability (og, new): " << ansio_polarizability << ", " << ansio_polarizability_ao << std::endl << std::endl;
+        std::cout << "Aniso polarizability (og, new): " << aniso_polarizability << ", " << aniso_polarizability_ao << std::endl << std::endl;
     }
 
     return 0;

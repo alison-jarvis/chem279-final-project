@@ -1,6 +1,6 @@
 # CNDO/2 Molecular Property Classification
 
-## Dipole Moment Calculation
+## Previous Dipole Moment Calculation
 
 The permanent dipole is a static property of the optimized molecular structure. We can use an atom-centered approximation (for now) which essentially sums the electron cloud over each atom using the CNDO/2 SCF density matrices. For unrestricted CNDO/2 we get the that total density matrix is:
 
@@ -20,13 +20,40 @@ $$\mathbf{\mu} = \sum_{A} q_A \mathbf{R_A}$$
 
 Here, $\mathbf{R_A}$ is the vector center of each atom $A$. The dipole moment $\mathbf{\mu}$ will be a vector corresponding to the dipole in each cartesian direction. $\mu = |\mathbf{\mu}|$ represents the overall strength of the dipole. 
 
-### Other Dipole Options
+## Dipole Calculation - AO Integral Method
 
-Another option for this which might be more robust is the Mulliken dipole?
+We want to modify the hamiltonian by applying an external electric field. 
 
-$$q_A = Z_A - \sum_{\mu \in A}\sum_{\nu} P_{\mu \nu} S_{\mu \nu}$$
+Total molecular dipole:
 
-$$\mu = \sum_{A} q_A R_A$$
+$$\mu_{x} = - \frac{\partial E}{\partial F_x}$$
+
+Which is the derivative of energy with respect to a change in external electric field in a given component, $F_x$. 
+
+We can divide this into two components, the electronic and nuclear contribution. 
+
+$$\mathbf{\mu}_x = \mathbf{\mu}_{x}^{nuc} + \mathbf{\mu}_{x}^{elec}$$
+
+The nuclear contribution is sum of effective nuclear charges over all atomic positions:
+
+$$\mathbf{\mu}_{x}^{nuc} = \sum_{A} Z_A \mathbf{R_{A,x}}$$
+
+The electronic contribution is:
+
+$$\mathbf{\mu}_x^{elec} = - \sum_{\mu \nu} P_{\mu \nu} D^x_{\mu \nu}$$
+
+Where $D^x_{\mu \nu}$ is the change in the CNDO/2 hamiltonian with an external field perturbation $F_x$, i.e.:
+
+$$\frac{\partial h_{\mu \nu}}{\partial F_x} = D^x_{\mu \nu}$$
+
+How we get the $D^x_{\mu \nu}$ terms is:
+
+$$D^x_{\mu \nu} = \sum_{kl} d_{k \mu} d_{l \nu} N_{k \mu} N_{l \nu} D_x^{kl}$$
+
+Where:
+
+$$D_x^{kl} = [S_x^{{kl}} (l_{\mu, x} + 1, l_{\nu, x}) + X_{\mu} S_x^{{kl}}(l_{\mu, x}, l_{\nu, x})] S_y^{kl} S_z^{kl}$$
+
 
 ## Polarizability Calculation
 
