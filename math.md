@@ -62,3 +62,4 @@ $$D_x^{AB} = [S_x^{{AB}} (l_{A} + 1, l_{B}) + X_{A} S_x^{{AB}}(l_{A}, l_{B})] S_
 
 $$\alpha = \frac{\partial^2 E}{\partial F^2}$$
 
+$$\Delta h_{\mu \nu} = F_x D^x_{\mu \nu} + F_y D^y_{\mu \nu} + F_z D^z_{\mu \nu}$$
