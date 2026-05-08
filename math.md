@@ -57,3 +57,8 @@ $$D_x^{AB} = \int g_A(r) \cdot x \cdot g_B(r) dr$$
 #### Equation 7
 
 $$D_x^{AB} = [S_x^{{AB}} (l_{A} + 1, l_{B}) + X_{A} S_x^{{AB}}(l_{A}, l_{B})] S_y^{AB} S_z^{AB}$$
+
+### Polarizability
+
+$$\alpha = \frac{\partial^2 E}{\partial F^2}$$
+
