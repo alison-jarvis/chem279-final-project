@@ -20,39 +20,78 @@ $$\mathbf{\mu} = \sum_{A} q_A \mathbf{R_A}$$
 
 Here, $\mathbf{R_A}$ is the vector center of each atom $A$. The dipole moment $\mathbf{\mu}$ will be a vector corresponding to the dipole in each cartesian direction. $\mu = |\mathbf{\mu}|$ represents the overall strength of the dipole. 
 
-## Dipole Calculation - AO Integral Method
 
-We want to modify the hamiltonian by applying an external electric field. 
+## Permanent Dipole AO method More Details
 
-Total molecular dipole:
+The CNDO/2 energy is approximately:
+
+$$E_{CNDO/2} = \sum_{\mu \nu} P_{\mu \nu} (h_{\mu \nu} + f_{\mu \nu}) + E_{nuc}$$
+
+The dipole moment ($\mu$) is the derivative of the energy with respect to a change in applied external electric field, which we call $F$. 
+
+In equation form:
 
 $$\mu_{x} = - \frac{\partial E}{\partial F_x}$$
 
-Which is the derivative of energy with respect to a change in external electric field in a given component, $F_x$. 
+So we need $\frac{\partial E}{\partial F_x}$ for CNDO/2. As a result of Hellmann-Feynman stationarity of the SCF solution (what that is not sure), this is:
 
-We can divide this into two components, the electronic and nuclear contribution. 
+$$\frac{\partial E}{\partial F_x} = \sum_{\mu \nu} P_{\mu \nu} \frac{\partial h_{\mu \nu}}{\partial F_x} + \frac{\partial E_{nuc-field}}{\partial F_x}$$
 
-$$\mathbf{\mu}_x = \mathbf{\mu}_{x}^{nuc} + \mathbf{\mu}_{x}^{elec}$$
+We can break this into two terms, since they are evaluated differently:
 
-The nuclear contribution is sum of effective nuclear charges over all atomic positions:
+$$-\frac{\partial E}{\partial F_x} = \mathbf{\mu}_x = \mathbf{\mu}_{x}^{elec} + \mathbf{\mu}_{x}^{nuc}$$
+
+Where the nuclear contribution is the sum of effective nuclear charges over all atomic positions:
 
 $$\mathbf{\mu}_{x}^{nuc} = \sum_{A} Z_A \mathbf{R_{A,x}}$$
 
-The electronic contribution is:
+And the electronic contribution is:
 
-$$\mathbf{\mu}_x^{elec} = - \sum_{\mu \nu} P_{\mu \nu} D^x_{\mu \nu}$$
+$$\mathbf{\mu}_{x}^{elec} = \sum_{\mu \nu} P_{\mu \nu} \frac{\partial h_{\mu \nu}}{\partial F_x}$$
 
-Where $D^x_{\mu \nu}$ is the change in the CNDO/2 hamiltonian with an external field perturbation $F_x$, i.e.:
+We know $P_{\mu \nu}$, which is the total density matrix from unrestricted hartree fock:
+
+$$P_{\mu \nu} = P^{\alpha}_{\mu \nu} + P^{\beta}_{\mu \nu}$$
+
+We need to define $\frac{\partial h_{\mu \nu}}{\partial F_x}$. Let's call this:
 
 $$\frac{\partial h_{\mu \nu}}{\partial F_x} = D^x_{\mu \nu}$$
 
-How we get the $D^x_{\mu \nu}$ terms is:
+These terms in theory will be: (why though)
 
-$$D^x_{\mu \nu} = \sum_{kl} d_{k \mu} d_{l \nu} N_{k \mu} N_{l \nu} D_x^{kl}$$
+$$D^x_{\mu \nu} = \langle \chi_{\mu} | x | \chi_{\nu} \rangle$$
+
+Where $\chi_{\mu}$ and $\chi_{\nu}$ are the atomic orbital basis functions and $x$ is position operator. 
+
+For our basis functions, we need to work out what $D^x_{\mu \nu}$ terms will be. 
+
+For two primitive cartesian gaussians:
+
+$$g_A = (x - X_A)^{l_A} (y - Y_A)^{m_A} (z - Z_A)^{n_A} e^{\alpha |r - R_A|^2}$$
+
+$$g_B = (x - X_B)^{l_B} (y - Y_B)^{m_B} (z - Z_B)^{n_B} e^{\beta |r - R_B|^2}$$
+
+The $x$ dipole primitive integral is:
+
+$$D_x^{AB} = \int g_A(r) x g_B(r) dr$$
+
+Factor into $x/y/z$:
+
+$$D_x^{AB} = D_x^{AB,x} S_y^{AB} S_z^{AB}$$
 
 Where:
 
-$$D_x^{kl} = [S_x^{{kl}} (l_{\mu, x} + 1, l_{\nu, x}) + X_{\mu} S_x^{{kl}}(l_{\mu, x}, l_{\nu, x})] S_y^{kl} S_z^{kl}$$
+$$D_x^{AB,x} = \int (x-X_A)^{l_A} x (x - X_B)^{l_B} e^{-\alpha (x-X_A)^2 - \beta (x-X_B)^2} dx$$
+
+Math, then:
+
+$$D_x^{AB} = [S_x^{{AB}} (l_{A} + 1, l_{B}) + X_{A} S_x^{{AB}}(l_{A}, l_{B})] S_y^{AB} S_z^{AB}$$
+
+Broken down into the full $D^x_{\mu \nu}$ matrix of terms:
+
+$$D^x_{\mu \nu} = \sum_{kl} d_{k \mu} d_{l \nu} N_{k \mu} N_{l \nu} D_x^{kl}$$
+
+Where $D_x^{kl}$ is calculated by the $D_x^{AB}$ equation. 
 
 
 ## Polarizability Calculation
