@@ -360,7 +360,6 @@ arma::mat populate_overlap_matrix(const std::vector<Sto3G_Basis>& basis_vec){
             overlap_matrix(j, i) = s_mu_nu;
         }
     }
-    // Convert overlap matrix from AU to eV
     return overlap_matrix;
 }
 
@@ -466,6 +465,7 @@ arma::vec calculate_permanent_dipole_ao_integrals(const std::vector<Atom>& atoms
         double nuclear_term = 0.0;
         // Iterate through atoms
         for (int A = 0; A < atoms.size(); A++){
+            // Add ZA * RA_k
             nuclear_term += atoms[A].Z * atoms[A].location[k];
         }
 
@@ -480,7 +480,7 @@ arma::vec calculate_permanent_dipole_ao_integrals(const std::vector<Atom>& atoms
     return dipoles;
 }
 
-// Helper, perturb the field for a given hamlitonian
+// Helper, perturb the field for a given hamiltonian
 arma::mat build_field_perturbation(const std::vector<Sto3G_Basis>& bases, const arma::vec& field){
     // Build dipole matrices for each component
     arma::mat Dx = build_ao_dipole_matrix(bases, 0);
@@ -711,10 +711,6 @@ arma::mat compute_fock_matrix(const std::vector<Sto3G_Basis>& basis_vec, const s
             else{
                 // Compute diagonal fock term
                 double fock_nu_nu = compute_fock_diag_term(basis_vec, atoms, gamma_matrix, P_tot, basis_nu.atomic_index, basis_nu.sto3g.IA_coeff, P_ab(nu, nu), full_fock);
-                // Compute field shift for diagonal term (zero nominally)
-                //double electric_field_shift = arma::dot(elec_field, atom_A.location);
-                // Add this to the diagonal term
-                //fock_nu_nu += electric_field_shift;
                 // Add to fock matrix
                 fock_matrix(nu, nu) = fock_nu_nu;
             }

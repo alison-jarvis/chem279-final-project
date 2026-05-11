@@ -126,8 +126,7 @@ arma::mat calculate_polarizability_tensor(std::string atoms_file_path, int p, in
 PROPERTY CALCULATION
 */
 
-//assuming dipole moment is arma::vec of length 3 = mu
-//assuming polarizability tensor is (3 x 3) arma::mat = alpha
+// Dipole magnitude
 double dipole_mag(const arma::vec& mu) {
     return std::sqrt(arma::dot(mu, mu));
 }

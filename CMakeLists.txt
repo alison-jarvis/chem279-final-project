@@ -37,4 +37,6 @@ link_libraries(common)
 
 # If Needed Make Modifications below this line 
 
-add_executable(output src/main.cpp src/polarity.cpp src/cndo2_utils.cpp) #need to edit this
+add_executable(output src/pipeline.cpp src/polarity.cpp src/cndo2_utils.cpp)
+
+add_executable(test src/test_fmag.cpp src/polarity.cpp src/cndo2_utils.cpp)
