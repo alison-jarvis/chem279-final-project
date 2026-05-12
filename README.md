@@ -6,7 +6,7 @@ This repository contains code which runs a CNDO/2 based molecular classification
 
 ### Overview
 
-The code modules are contained in the `src` folder. `pipeline.cpp` handles running the actual pipeline, and all utilities corresponding to the CNDO/2 code and polarizability are contained in `cndo2_utils.cpp`. 
+The code modules are contained in the `src` folder. `pipeline.cpp` handles running the actual pipeline, and all utilities corresponding to the CNDO/2 code and the dipole calculation are contained in `cndo2_utils.cpp`. Code pertaining to the approximated dipole calculation, polarizability, and derived properties is contained in `polarity.cpp`. 
 
 ### Container
 
